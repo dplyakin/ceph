@@ -1183,6 +1183,8 @@ struct req_state : DoutPrefixProvider {
     } s3_postobj_creds;
   } auth;
 
+  mutable std::string access_key;
+
   std::unique_ptr<RGWAccessControlPolicy> user_acl;
   std::unique_ptr<RGWAccessControlPolicy> bucket_acl;
   std::unique_ptr<RGWAccessControlPolicy> object_acl;

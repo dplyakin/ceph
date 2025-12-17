@@ -6149,6 +6149,7 @@ AWSEngine::authenticate(const DoutPrefixProvider* dpp, const req_state* const s,
 {
   /* Small reminder: an ver_abstractor is allowed to throw! */
   const auto auth_data = ver_abstractor.get_auth_data(s);
+  s->access_key = std::string(auth_data.access_key_id);
 
   if (auth_data.access_key_id.empty() || auth_data.client_signature.empty()) {
     return result_t::deny(-EINVAL);

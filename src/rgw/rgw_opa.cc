@@ -47,6 +47,7 @@ int rgw_opa_authorize(RGWOp *& op,
     jf.dump_string("method", request_method);
   }
   jf.dump_string("relative_uri", s->relative_uri.c_str());
+  jf.dump_string("access_key", s->access_key.c_str());
   jf.dump_string("decoded_uri", s->decoded_uri.c_str());
   jf.dump_string("params", s->info.request_params.c_str());
   jf.dump_string("request_uri_aws4", s->info.request_uri_aws4.c_str());
