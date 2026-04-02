@@ -55,6 +55,7 @@ int rgw_opa_authorize(RGWOp *& op,
   }
   if (s->auth.identity) {
     jf.dump_string("subuser", s->auth.identity->get_subuser().c_str());
+    jf.dump_string("access_key", s->auth.identity->get_access_key_id().c_str());
   }
   if (s->user) {
     jf.dump_object("user_info", s->user->get_info());
