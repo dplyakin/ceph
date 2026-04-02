@@ -46,6 +46,10 @@ int rgw_opa_authorize(RGWOp *& op,
   if (request_method) {
     jf.dump_string("method", request_method);
   }
+  if (op) {
+    jf.dump_string("op_name", op->name());
+    jf.dump_int("op_type", op->get_type());
+  }
   jf.dump_string("relative_uri", s->relative_uri.c_str());
   jf.dump_string("decoded_uri", s->decoded_uri.c_str());
   jf.dump_string("params", s->info.request_params.c_str());

@@ -49,15 +49,15 @@ Example request::
            "subuser": "subuser",
            "user_info": {
                "user_id": "john",
-               "display_name": "John"  
+               "display_name": "John"
            },
            "bucket_info": {
                "bucket": {
                    "name": "Testbucket",
-                   "bucket_id": "testbucket" 
+                   "bucket_id": "testbucket"
                },
-               "owner": "john" 
-           }             
+               "owner": "john"
+           }
        }
    }
 
