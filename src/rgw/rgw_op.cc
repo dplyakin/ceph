@@ -4394,6 +4394,21 @@ int RGWPostObj::verify_permission(optional_yield y)
   return 0;
 }
 
+int RGWPostObj::init_processing(optional_yield y)
+{
+  op_ret = RGWOp::init_processing(y);
+  if (op_ret < 0) {
+    return op_ret;
+  }
+
+  op_ret = get_params(y);
+  if (op_ret < 0) {
+    return op_ret;
+  }
+
+  return 0;
+}
+
 void RGWPostObj::pre_exec()
 {
   rgw_bucket_object_pre_exec(s);
@@ -4404,12 +4419,6 @@ void RGWPostObj::execute(optional_yield y)
   boost::optional<RGWPutObj_Compress> compressor;
   CompressorRef plugin;
   char supplied_md5[CEPH_CRYPTO_MD5_DIGESTSIZE * 2 + 1];
-
-  /* Read in the data from the POST form. */
-  op_ret = get_params(y);
-  if (op_ret < 0) {
-    return;
-  }
 
   op_ret = verify_params();
   if (op_ret < 0) {
