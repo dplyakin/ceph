@@ -67,6 +67,12 @@ int rgw_opa_authorize(RGWOp *& op,
   if (s->bucket) {
     jf.dump_object("bucket_info", s->bucket->get_info());
   }
+
+  jf.open_object_section("method_data");
+  if (op) {
+    op->dump_opa_method_data(&jf);
+  }
+  jf.close_section();
   jf.close_section();
   jf.close_section();
 

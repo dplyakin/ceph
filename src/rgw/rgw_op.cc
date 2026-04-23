@@ -7141,56 +7141,22 @@ void RGWDeleteMultiObj::handle_individual_object(const rgw_obj_key& o, optional_
 
 void RGWDeleteMultiObj::execute(optional_yield y)
 {
-  RGWMultiDelDelete *multi_delete;
   vector<rgw_obj_key>::iterator iter;
-  RGWMultiDelXMLParser parser;
   uint32_t aio_count = 0;
   const uint32_t max_aio = std::max<uint32_t>(1, s->cct->_conf->rgw_multi_obj_del_max_aio);
-  char* buf;
   std::optional<boost::asio::deadline_timer> formatter_flush_cond;
   if (y) {
     formatter_flush_cond = std::make_optional<boost::asio::deadline_timer>(y.get_io_context());  
   }
 
-  buf = data.c_str();
-  if (!buf) {
-    op_ret = -EINVAL;
+  op_ret = parse_delete_objects();
+  if (op_ret < 0) {
     goto error;
   }
-
-  if (!parser.init()) {
-    op_ret = -EINVAL;
-    goto error;
-  }
-
-  if (!parser.parse(buf, data.length(), 1)) {
-    op_ret = -EINVAL;
-    goto error;
-  }
-
-  multi_delete = static_cast<RGWMultiDelDelete *>(parser.find_first("Delete"));
-  if (!multi_delete) {
-    op_ret = -EINVAL;
-    goto error;
-  } else {
-#define DELETE_MULTI_OBJ_MAX_NUM      1000
-    int max_num = s->cct->_conf->rgw_delete_multi_obj_max_num;
-    if (max_num < 0) {
-      max_num = DELETE_MULTI_OBJ_MAX_NUM;
-    }
-    int multi_delete_object_num = multi_delete->objects.size();
-    if (multi_delete_object_num > max_num) {
-      op_ret = -ERR_MALFORMED_XML;
-      goto error;
-    }
-  }
-
-  if (multi_delete->is_quiet())
-    quiet = true;
 
   if (s->bucket->get_info().mfa_enabled()) {
     bool has_versioned = false;
-    for (auto i : multi_delete->objects) {
+    for (const auto& i : deleting_objects) {
       if (!i.instance.empty()) {
         has_versioned = true;
         break;
@@ -7204,12 +7170,12 @@ void RGWDeleteMultiObj::execute(optional_yield y)
   }
 
   begin_response();
-  if (multi_delete->objects.empty()) {
+  if (deleting_objects.empty()) {
     goto done;
   }
 
-  for (iter = multi_delete->objects.begin();
-        iter != multi_delete->objects.end();
+  for (iter = deleting_objects.begin();
+        iter != deleting_objects.end();
         ++iter) {
     rgw_obj_key obj_key = *iter;
     if (y) {
@@ -7226,7 +7192,7 @@ void RGWDeleteMultiObj::execute(optional_yield y)
     }
   }
   if (formatter_flush_cond) {
-    wait_flush(y, &*formatter_flush_cond, [this, n=multi_delete->objects.size()] {
+    wait_flush(y, &*formatter_flush_cond, [this, n=deleting_objects.size()] {
       return n == ops_log_entries.size();
     });
   }
@@ -7244,6 +7210,50 @@ error:
   send_status();
   return;
 
+}
+
+int RGWDeleteMultiObj::parse_delete_objects()
+{
+  static constexpr int delete_multi_obj_max_num = 1000;
+
+  if (deleting_objects_parsed) {
+    return 0;
+  }
+
+  deleting_objects.clear();
+  quiet = false;
+
+  char *buf = data.c_str();
+  if (!buf) {
+    return -EINVAL;
+  }
+
+  RGWMultiDelXMLParser parser;
+  if (!parser.init()) {
+    return -EINVAL;
+  }
+
+  if (!parser.parse(buf, data.length(), 1)) {
+    return -EINVAL;
+  }
+
+  auto *multi_delete = static_cast<RGWMultiDelDelete *>(parser.find_first("Delete"));
+  if (!multi_delete) {
+    return -EINVAL;
+  }
+
+  int max_num = s->cct->_conf->rgw_delete_multi_obj_max_num;
+  if (max_num < 0) {
+    max_num = delete_multi_obj_max_num;
+  }
+  if (static_cast<int>(multi_delete->objects.size()) > max_num) {
+    return -ERR_MALFORMED_XML;
+  }
+
+  deleting_objects = multi_delete->objects;
+  quiet = multi_delete->is_quiet();
+  deleting_objects_parsed = true;
+  return 0;
 }
 
 bool RGWBulkDelete::Deleter::verify_permission(RGWBucketInfo& binfo,

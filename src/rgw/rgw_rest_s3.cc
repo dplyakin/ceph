@@ -42,6 +42,7 @@
 #include "rgw_cors.h"
 #include "rgw_cors_s3.h"
 #include "rgw_tag_s3.h"
+#include "rgw_multi_del.h"
 
 #include "rgw_client_io.h"
 
@@ -4200,8 +4201,22 @@ void RGWListBucketMultiparts_ObjStore_S3::send_response()
   rgw_flush_formatter_and_reset(s, s->formatter);
 }
 
+int RGWDeleteMultiObj_ObjStore_S3::init_processing(optional_yield y)
+{
+  int ret = RGWOp::init_processing(y);
+  if (ret < 0) {
+    return ret;
+  }
+
+  return get_params(y);
+}
+
 int RGWDeleteMultiObj_ObjStore_S3::get_params(optional_yield y)
 {
+  if (params_parsed) {
+    return 0;
+  }
+
   int ret = RGWDeleteMultiObj_ObjStore::get_params(y);
   if (ret < 0) {
     return ret;
@@ -4213,7 +4228,23 @@ int RGWDeleteMultiObj_ObjStore_S3::get_params(optional_yield y)
     bypass_governance_mode = boost::algorithm::iequals(bypass_gov_decoded, "true");
   }
 
-  return do_aws4_auth_completion();
+  ret = do_aws4_auth_completion();
+  if (ret < 0) {
+    return ret;
+  }
+
+  ret = parse_delete_objects();
+  if (ret < 0) {
+    return ret;
+  }
+
+  params_parsed = true;
+  return 0;
+}
+
+void RGWDeleteMultiObj_ObjStore_S3::dump_opa_method_data(ceph::Formatter *f) const
+{
+  encode_json("deleting_objects", deleting_objects, f);
 }
 
 void RGWDeleteMultiObj_ObjStore_S3::send_status()

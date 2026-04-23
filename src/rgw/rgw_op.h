@@ -271,6 +271,7 @@ public:
   virtual RGWOpType get_type() { return RGW_OP_UNKNOWN; }
 
   virtual uint32_t op_mask() { return 0; }
+  virtual void dump_opa_method_data(ceph::Formatter *f) const {}
 
   virtual int error_handler(int err_no, std::string *error_content, optional_yield y);
 
@@ -2062,11 +2063,15 @@ protected:
   std::vector<delete_multi_obj_entry> ops_log_entries;
   bufferlist data;
   rgw::sal::Bucket* bucket;
+  std::vector<rgw_obj_key> deleting_objects;
+  bool deleting_objects_parsed = false;
   bool quiet;
   bool status_dumped;
   bool acl_allowed = false;
   bool bypass_perm;
   bool bypass_governance_mode;
+
+  int parse_delete_objects();
 
 public:
   RGWDeleteMultiObj() {
