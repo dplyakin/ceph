@@ -3684,6 +3684,19 @@ int RGWPutObj::init_processing(optional_yield y) {
   return RGWOp::init_processing(y);
 }
 
+void RGWPutObj::dump_opa_method_data(ceph::Formatter *f) const
+{
+  if (copy_source_object_name.empty()) {
+    return;
+  }
+
+  f->dump_string("source_bucket", copy_source_bucket_name);
+  f->dump_string("source_object_name", copy_source_object_name);
+  if (!copy_source_version_id.empty()) {
+    f->dump_string("source_object_version", copy_source_version_id);
+  }
+}
+
 int RGWPutObj::verify_permission(optional_yield y)
 {
   if (! copy_source.empty()) {
@@ -5289,6 +5302,15 @@ bool RGWCopyObj::parse_copy_location(const std::string_view& url_src,
   }
 
   return true;
+}
+
+void RGWCopyObj::dump_opa_method_data(ceph::Formatter *f) const
+{
+  f->dump_string("source_bucket", s->src_bucket_name);
+  f->dump_string("source_object_name", s->src_object->get_name());
+  if (!s->src_object->get_instance().empty()) {
+    f->dump_string("source_object_version", s->src_object->get_instance());
+  }
 }
 
 int RGWCopyObj::init_processing(optional_yield y)
