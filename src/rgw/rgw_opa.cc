@@ -95,12 +95,28 @@ int rgw_opa_authorize(RGWOp *& op,
     return -EINVAL;
   }
 
-  bool opa_result;
-  JSONDecoder::decode_json("result", opa_result, &parser);
+  string opa_result;
+  try {
+    JSONDecoder::decode_json("result", opa_result, &parser);
+  } catch (const JSONDecoder::err& err) {
+    ldpp_dout(op, 2) << "OPA parse error: " << err.what() << dendl;
+    return -EINVAL;
+  }
 
-  if (opa_result == false) {
+  if (opa_result == "denied") {
     ldpp_dout(op, 2) << "OPA rejecting request" << dendl;
     return -EPERM;
+  }
+
+  if (opa_result == "not_implemented") {
+    ldpp_dout(op, 2) << "OPA reports request is not implemented" << dendl;
+    return -ERR_NOT_IMPLEMENTED;
+  }
+
+  if (opa_result != "allowed") {
+    ldpp_dout(op, 2) << "OPA parse error: unexpected result '"
+                     << opa_result << "'" << dendl;
+    return -EINVAL;
   }
 
   ldpp_dout(op, 2) << "OPA accepting request" << dendl;
