@@ -4242,7 +4242,7 @@ int RGWDeleteMultiObj_ObjStore_S3::get_params(optional_yield y)
   return 0;
 }
 
-void RGWDeleteMultiObj_ObjStore_S3::dump_opa_method_data(ceph::Formatter *f) const
+void RGWDeleteMultiObj_ObjStore_S3::dump_op_data(ceph::Formatter *f) const
 {
   encode_json("deleting_objects", deleting_objects, f);
 }

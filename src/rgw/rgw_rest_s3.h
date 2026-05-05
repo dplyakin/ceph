@@ -517,7 +517,7 @@ public:
 
   int init_processing(optional_yield y) override;
   int get_params(optional_yield y) override;
-  void dump_opa_method_data(ceph::Formatter *f) const override;
+  void dump_op_data(ceph::Formatter *f) const override;
   void send_status() override;
   void begin_response() override;
   void send_partial_response(const rgw_obj_key& key, bool delete_marker,

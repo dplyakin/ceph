@@ -46,10 +46,15 @@ int rgw_opa_authorize(RGWOp *& op,
   if (request_method) {
     jf.dump_string("method", request_method);
   }
+  jf.open_object_section("operation");
   if (op) {
-    jf.dump_string("op_name", op->name());
-    jf.dump_int("op_type", op->get_type());
+    jf.dump_string("name", op->name());
+    jf.dump_int("type", op->get_type());
+    jf.open_object_section("data");
+    op->dump_op_data(&jf);
+    jf.close_section();
   }
+  jf.close_section();
   jf.dump_string("relative_uri", s->relative_uri.c_str());
   jf.dump_string("decoded_uri", s->decoded_uri.c_str());
   jf.dump_string("params", s->info.request_params.c_str());
@@ -67,12 +72,6 @@ int rgw_opa_authorize(RGWOp *& op,
   if (s->bucket) {
     jf.dump_object("bucket_info", s->bucket->get_info());
   }
-
-  jf.open_object_section("method_data");
-  if (op) {
-    op->dump_opa_method_data(&jf);
-  }
-  jf.close_section();
   jf.close_section();
   jf.close_section();
 

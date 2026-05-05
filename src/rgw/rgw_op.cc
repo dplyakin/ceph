@@ -3684,7 +3684,7 @@ int RGWPutObj::init_processing(optional_yield y) {
   return RGWOp::init_processing(y);
 }
 
-void RGWPutObj::dump_opa_method_data(ceph::Formatter *f) const
+void RGWPutObj::dump_op_data(ceph::Formatter *f) const
 {
   if (copy_source_object_name.empty()) {
     return;
@@ -5304,7 +5304,7 @@ bool RGWCopyObj::parse_copy_location(const std::string_view& url_src,
   return true;
 }
 
-void RGWCopyObj::dump_opa_method_data(ceph::Formatter *f) const
+void RGWCopyObj::dump_op_data(ceph::Formatter *f) const
 {
   f->dump_string("source_bucket", s->src_bucket_name);
   f->dump_string("source_object_name", s->src_object->get_name());
