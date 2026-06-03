@@ -271,6 +271,7 @@ public:
   virtual RGWOpType get_type() { return RGW_OP_UNKNOWN; }
 
   virtual uint32_t op_mask() { return 0; }
+  virtual void dump_op_data(ceph::Formatter *f) const {}
 
   virtual int error_handler(int err_no, std::string *error_content, optional_yield y);
 
@@ -1275,6 +1276,7 @@ public:
   int verify_permission(optional_yield y) override;
   void pre_exec() override;
   void execute(optional_yield y) override;
+  void dump_op_data(ceph::Formatter *f) const override;
 
   /* this is for cases when copying data from other object */
   virtual int get_decrypt_filter(std::unique_ptr<RGWGetObj_Filter>* filter,
@@ -1342,6 +1344,7 @@ public:
     policy.set_ctx(s->cct);
   }
 
+  int init_processing(optional_yield y) override;
   int verify_permission(optional_yield y) override;
   void pre_exec() override;
   void execute(optional_yield y) override;
@@ -1577,6 +1580,7 @@ public:
   int verify_permission(optional_yield y) override;
   void pre_exec() override;
   void execute(optional_yield y) override;
+  void dump_op_data(ceph::Formatter *f) const override;
   void progress_cb(off_t ofs);
 
   virtual int check_storage_class(const rgw_placement_rule& src_placement) {
@@ -2061,11 +2065,15 @@ protected:
   std::vector<delete_multi_obj_entry> ops_log_entries;
   bufferlist data;
   rgw::sal::Bucket* bucket;
+  std::vector<rgw_obj_key> deleting_objects;
+  bool deleting_objects_parsed = false;
   bool quiet;
   bool status_dumped;
   bool acl_allowed = false;
   bool bypass_perm;
   bool bypass_governance_mode;
+
+  int parse_delete_objects();
 
 public:
   RGWDeleteMultiObj() {

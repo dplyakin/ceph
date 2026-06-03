@@ -85,6 +85,8 @@ public:
 
   virtual std::string get_role_tenant() const { return ""; }
 
+  virtual std::string get_access_key_id() const { return ""; }
+
   /* write any auth-specific fields that are safe to expose in the ops log */
   virtual void write_ops_log_entry(rgw_log_entry& entry) const {};
 };
@@ -626,6 +628,7 @@ public:
   uint32_t get_identity_type() const override { return info.acct_type; }
   std::string get_acct_name() const override { return info.acct_name; }
   std::string get_subuser() const override { return {}; }
+  std::string get_access_key_id() const override { return info.access_key_id; }
 
   struct Factory {
     virtual ~Factory() {}
@@ -688,6 +691,7 @@ public:
   uint32_t get_identity_type() const override { return TYPE_RGW; }
   std::string get_acct_name() const override { return {}; }
   std::string get_subuser() const override { return subuser; }
+  std::string get_access_key_id() const override { return access_key_id; }
   void write_ops_log_entry(rgw_log_entry& entry) const override;
 
   struct Factory {

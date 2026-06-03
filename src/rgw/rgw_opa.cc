@@ -46,6 +46,15 @@ int rgw_opa_authorize(RGWOp *& op,
   if (request_method) {
     jf.dump_string("method", request_method);
   }
+  jf.open_object_section("operation");
+  if (op) {
+    jf.dump_string("name", op->name());
+    jf.dump_int("type", op->get_type());
+    jf.open_object_section("data");
+    op->dump_op_data(&jf);
+    jf.close_section();
+  }
+  jf.close_section();
   jf.dump_string("relative_uri", s->relative_uri.c_str());
   jf.dump_string("decoded_uri", s->decoded_uri.c_str());
   jf.dump_string("params", s->info.request_params.c_str());
@@ -55,6 +64,7 @@ int rgw_opa_authorize(RGWOp *& op,
   }
   if (s->auth.identity) {
     jf.dump_string("subuser", s->auth.identity->get_subuser().c_str());
+    jf.dump_string("access_key", s->auth.identity->get_access_key_id().c_str());
   }
   if (s->user) {
     jf.dump_object("user_info", s->user->get_info());
@@ -84,12 +94,28 @@ int rgw_opa_authorize(RGWOp *& op,
     return -EINVAL;
   }
 
-  bool opa_result;
-  JSONDecoder::decode_json("result", opa_result, &parser);
+  string opa_result;
+  try {
+    JSONDecoder::decode_json("result", opa_result, &parser);
+  } catch (const JSONDecoder::err& err) {
+    ldpp_dout(op, 2) << "OPA parse error: " << err.what() << dendl;
+    return -EINVAL;
+  }
 
-  if (opa_result == false) {
+  if (opa_result == "denied") {
     ldpp_dout(op, 2) << "OPA rejecting request" << dendl;
     return -EPERM;
+  }
+
+  if (opa_result == "not_implemented") {
+    ldpp_dout(op, 2) << "OPA reports request is not implemented" << dendl;
+    return -ERR_NOT_IMPLEMENTED;
+  }
+
+  if (opa_result != "allowed") {
+    ldpp_dout(op, 2) << "OPA parse error: unexpected result '"
+                     << opa_result << "'" << dendl;
+    return -EINVAL;
   }
 
   ldpp_dout(op, 2) << "OPA accepting request" << dendl;

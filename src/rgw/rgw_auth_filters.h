@@ -118,6 +118,10 @@ public:
     return get_decoratee().modify_request_state(dpp, s);
   }
 
+  std::string get_access_key_id() const override {
+    return get_decoratee().get_access_key_id();
+  }
+
   void write_ops_log_entry(rgw_log_entry& entry) const override {
     return get_decoratee().write_ops_log_entry(entry);
   }

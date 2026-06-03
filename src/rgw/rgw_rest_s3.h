@@ -509,11 +509,15 @@ public:
 };
 
 class RGWDeleteMultiObj_ObjStore_S3 : public RGWDeleteMultiObj_ObjStore {
+  bool params_parsed{false};
+
 public:
   RGWDeleteMultiObj_ObjStore_S3() {}
   ~RGWDeleteMultiObj_ObjStore_S3() override {}
 
+  int init_processing(optional_yield y) override;
   int get_params(optional_yield y) override;
+  void dump_op_data(ceph::Formatter *f) const override;
   void send_status() override;
   void begin_response() override;
   void send_partial_response(const rgw_obj_key& key, bool delete_marker,
